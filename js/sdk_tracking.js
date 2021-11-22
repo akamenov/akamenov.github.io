@@ -42,11 +42,33 @@ function initSession(sdk, postMessage) {
     if (sdk.sessionId === undefined) {
         fetch("https://api.db-ip.com/v2/free/self").then(response => response.json()).then(sendSessionStartEvent);
     }
+    let _ = function(name, payload){
+        if (sdk.sessionId !== undefined) payload["session_id"] = sdk.sessionId;
+        console.log("Sending event", name, payload);
+        postMessage({templateEvent: name, templatePayload: payload}, '*');
+    };
     return {
+        sendEvent: _,
+        sendSimple: function (category, action, label) {
+            _("USER_EVENT", {'category': category, 'action': action, 'label': label})
+        }
+    }
+}
+
+function init_gtm(ga) {
+    return {
+        sendSimple: function (category, action, label) {
+            window.dataLayer.push({
+                event: 'event',
+                eventProps: {
+                    category: category,
+                    action: action,
+                    label: label,
+                }
+            });
+        },
         sendEvent: function(name, payload){
-            if (sdk.sessionId !== undefined) payload["session_id"] = sdk.sessionId;
-            console.log("Sending event", name, payload);
-            postMessage({templateEvent: name, templatePayload: payload}, '*');
+            console.log("Sending event not supported: ", name, payload);
         }
     }
 }
